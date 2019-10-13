@@ -6,3 +6,11 @@ services:
     ports:
       - "27017:27017"
 
+  postgres:
+    image: postgres:11
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ''
+      POSTGRES_DB: 'shorty-stats-test'
+    ports:
+      - "5432:5432"
