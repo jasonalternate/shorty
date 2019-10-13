@@ -2,20 +2,24 @@ package main
 
 import (
 	"context"
-	"github.com/go-chi/chi/middleware"
-	"go.mongodb.org/mongo-driver/bson"
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/go-chi/chi/middleware"
+	"go.mongodb.org/mongo-driver/bson"
 	"github.com/go-chi/chi"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/jasondeutsch/shorty/cmd/web/handler"
 	"github.com/jasondeutsch/shorty/internal/link"
+	"github.com/jasondeutsch/shorty/internal/stats"
 )
 
 func main() {
@@ -37,12 +41,22 @@ func main() {
 		log.Fatal(err)
 	}
 
+	postgresDB, err := initPostgres()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// services
+
+	statsRepo := stats.NewPostgres(postgresDB)
+	statsService := stats.NewStatsService(statsRepo)
+
 	shortlinkRepo := link.NewMongo(mongoDB)
 	shortlinkService := link.NewShortLinkService(shortlinkRepo)
-	shortLinkHandlers := handler.NewHandler(shortlinkService)
+	shortLinkHandlers := handler.NewHandler(shortlinkService, statsService)
 
 	// router
+
 
 	r := chi.NewRouter()
 
@@ -89,4 +103,12 @@ func initMongo() (*mongo.Database, error) {
 	_, err = shortlinkCollection.Indexes().CreateOne(ctx, mod)
 
 	return mongoDB, err
+}
+
+func initPostgres() (*sql.DB, error) {
+	connectionInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DB"))
+
+	db, err := sql.Open("postgres",connectionInfo )
+	return db, err
 }

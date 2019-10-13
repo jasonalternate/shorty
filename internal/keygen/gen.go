@@ -1,6 +1,9 @@
 package keygen
 
-import "math/rand"
+import (
+	"math/rand"
+	"time"
+)
 
 type KeyGenerator struct {
 }
@@ -14,7 +17,9 @@ const (
 func (k KeyGenerator) Generate(length int) string {
 	b := make([]byte, length)
 	for i := 0; i < length; {
-		if idx := int(rand.Int63() & letterIdxMask); idx < len(chars) {
+		rand.Seed(time.Now().UnixNano())
+		randInt := rand.Intn(len(chars)-1 - 0) + 0
+		if idx := int(randInt & letterIdxMask); idx < len(chars) {
 			b[i] = chars[idx]
 			i++
 		}

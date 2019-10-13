@@ -3,10 +3,9 @@ package handler
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
-	"go.mongodb.org/mongo-driver/bson"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -14,11 +13,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jasondeutsch/shorty/internal/link"
+	"github.com/go-chi/chi"
+	"go.mongodb.org/mongo-driver/bson"
 	"github.com/joho/godotenv"
-
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	_ "github.com/lib/pq"
+
+	"github.com/jasondeutsch/shorty/internal/link"
+	"github.com/jasondeutsch/shorty/internal/stats"
 )
 
 var shortLinkHandler *Handler
@@ -46,6 +49,18 @@ func TestMain(m *testing.M) {
 	mongoDB := mongoClient.Database("shorty-test")
 	shortlinkCollection := mongoDB.Collection("shortlinks")
 
+	connectionInfo := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable",
+		os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_DB"))
+
+	postgresDB, err := sql.Open("postgres",connectionInfo )
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := postgresDB.Ping(); err != nil {
+		log.Fatal(err)
+	}
+
 	t := true // wtf mongo?
 	mod := mongo.IndexModel{
 		Keys: bson.M{
@@ -57,9 +72,12 @@ func TestMain(m *testing.M) {
 		fmt.Println(err)
 	}
 
+	statsRepo := stats.NewPostgres(postgresDB)
+	statsService := stats.NewStatsService(statsRepo)
+
 	shortLinkRepo := link.NewMongo(mongoDB)
 	shortLinkService := link.NewShortLinkService(shortLinkRepo)
-	shortLinkHandler = NewHandler(shortLinkService)
+	shortLinkHandler = NewHandler(shortLinkService, statsService)
 
 	runTests := m.Run()
 	os.Exit(runTests)

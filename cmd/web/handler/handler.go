@@ -3,22 +3,26 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi"
+	shortlinkService "github.com/jasondeutsch/shorty/internal/link/service"
+	statsService "github.com/jasondeutsch/shorty/internal/stats/service"
 	"gopkg.in/matryer/respond.v1"
 	"net/http"
-
-	shortlinkService "github.com/jasondeutsch/shorty/internal/link/service"
+	"time"
 )
 
 type Handler struct {
 	router      chi.Router
 	linkService shortlinkService.Service
+	statsService statsService.Service
 }
 
-func NewHandler(linkService shortlinkService.Service) *Handler {
+func NewHandler(linkService shortlinkService.Service, statsService statsService.Service) *Handler {
 	h := &Handler{
 		router: chi.NewMux(),
 		linkService: linkService,
+		statsService: statsService,
 	}
 
 	h.router.With(ShortLinkCtx).Get("/{slug}", h.RedirectFromShortLink)
@@ -42,9 +46,10 @@ func (h *Handler) RedirectFromShortLink(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// TODO: go stats....
-
 	http.Redirect(w, r, shortlink.Destination, http.StatusSeeOther)
+
+	view := h.statsService.NewView(shortlink.Slug, time.Now())
+	err = h.statsService.SaveView(view)
 }
 
 
@@ -62,7 +67,8 @@ func (h *Handler) CreateShortLink(w http.ResponseWriter, r *http.Request) {
 
 	link, err := h.linkService.Create(req.Destination)
 	if err != nil {
-		respond.With(w,r, http.StatusBadRequest, err)
+		fmt.Println(err)
+		respond.With(w,r, http.StatusInternalServerError, err)
 	}
 
 	respond.With(w,r, http.StatusCreated, link)
