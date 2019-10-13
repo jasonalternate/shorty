@@ -12,5 +12,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ''
       POSTGRES_DB: 'shorty-stats-test'
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
