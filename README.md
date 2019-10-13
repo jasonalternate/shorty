@@ -55,3 +55,4 @@ postgre for stats, 2 tables: raw and snapshot
 * No work has been done to properly setup MongoDB or Redis. This includes basic security.
 * Per assignment, no auth or user management is provided.
 * the document store (in this case mongo) would have to be rethought for production, perhaps sharding
+* the `.env` file is committed for convenience - this would never happen in a real world scenario
