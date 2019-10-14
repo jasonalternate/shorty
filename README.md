@@ -28,14 +28,33 @@ If for some reason the `init.sql`  fails to run then the best solution is to ret
 `go run cmd/web/main.go`
 
 ## Test
-`go test ../.`
+`go test -v ./...`
 
+## curltest.sh
+
+A small script is included that will sequence 1000 parallel post requests to the create link endpoint.
+This script depends on `parallel`.
+IF running MacOS ensure this dependency is available, if not:
+
+`brew install parallel`
+
+`parallel --citation`
+
+run the script with
+
+`./curltest.sh`
 
 
 ## API
 
 ### `POST /link`
 Creates a short url from a long url 
+```$xslt
+{
+  "destination": "valid url"
+}
+```
+Destination must be the complete URL. For example `http://wwww.somewebsite.com` is valid whereas `somewebsite.com` is not.
 
 ### `GET /link/{id}`
 Retrieves short link data
@@ -46,9 +65,17 @@ Redirects to full URL
 
 # Explanation of Work
 
-#### design philosophy
 My intention was to go beyond the simplest version of this application which may consist of http handlers doing "all of the work". <br /> 
 The application structure uses *some* patterns borrowed from Domain Driven Design in order to decouple various responsibilities. <br />  
+
+
+
+The application logic is provided by two services and one small package.
+The `link` service is responsible for the management of shortlinks. This service depends on the `keygen` package; a simple random key generator.
+The key generation for the `link` service followed a simple idea that a string of six characters comprised of 63 possible characters could produce a total of 62,523,502,209 possible shortlink (63^6).
+The `stats` service is responsible for tracking the utilization of a given short link.
+
+
 
 
 
@@ -58,15 +85,19 @@ In keeping with the "this assignment should be accomplished in a day, perhaps 4 
 
 Similarly, I suspect that the call to save a `view` should be done processed via some sort of queue in order to ease load on Postgres.
 
-Document storage for links
+Testing is provided only in the simplest form. A basic integration test is vailable for each handler. Given sufficent time, the application should fulfull the testing pyramid as described by Mike Cohn.
+Test setup as found in `TestMain` is a mess and not acceptable for production code.
+Lastly, there is no environment distinction between test and anything else.
 
-Redis cache probably
+No caching has been implemented. It makes sense to provide a cash of shortlinks with an LRU strategy.
 
-Postgres for stats, 2 tables: raw and snapshot
+The `stats` package, while decoupled, is highly specific to `link`. Ideally, `stats` would work in a more general.
 
-^daily job to process stats
+Logging is practically absent. Each request *should* be given a UID which can be used a logger.
 
-^ short link at seven chars is ~5 billion possibilities, 6 ==  ~2 billion
+Last, as I am at the suggested time limit I am forgoing the typical refactoring that often happens when one reads one's own code after a good sleep.
+
+
 # Disclaimer
 
 * No work has been done to properly setup MongoDB, Redis, Postgres. This includes basic security.
