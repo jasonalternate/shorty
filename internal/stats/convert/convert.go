@@ -18,3 +18,11 @@ func RepoViewToModelView(in repo.View) model.View {
 		TimeStamp: in.TimeStamp,
 	}
 }
+func RepoSnapshotToModelSnapshot(in repo.Snapshot) model.Snapshot {
+	return model.Snapshot{
+		Slug: in.Slug,
+		Count24Hours: in.Count24Hours,
+		CountOneWeek: in.CountOneWeek,
+		CountAllTime: in.CountAllTime,
+	}
+}

@@ -10,6 +10,7 @@ import (
 type Service interface {
 	SaveView(model.View) error
 	NewView(string, time.Time) model.View
+	GetSnapshot(string) (model.Snapshot, error)
 }
 
 var _ Service = (*LocalService)(nil)
@@ -31,4 +32,10 @@ func (s *LocalService) NewView(slug string, timeStamp time.Time) model.View{
 		Slug: slug,
 		TimeStamp: timeStamp,
 	}
+}
+
+func (s *LocalService) GetSnapshot(slug string) (model.Snapshot, error) {
+	snapshot, err := s.repo.GetSnapshot(slug)
+
+	return convert.RepoSnapshotToModelSnapshot(snapshot), err
 }

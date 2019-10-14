@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/go-chi/chi"
 	shortlinkService "github.com/jasondeutsch/shorty/internal/link/service"
 	statsService "github.com/jasondeutsch/shorty/internal/stats/service"
@@ -67,15 +66,38 @@ func (h *Handler) CreateShortLink(w http.ResponseWriter, r *http.Request) {
 
 	link, err := h.linkService.Create(req.Destination)
 	if err != nil {
-		fmt.Println(err)
 		respond.With(w,r, http.StatusInternalServerError, err)
+		return
 	}
 
 	respond.With(w,r, http.StatusCreated, link)
 }
 
 func (h * Handler) GetShortLinkStats(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("todo"))
+	slug := chi.URLParam(r, "slug")
+
+	snapshot, err := h.statsService.GetSnapshot(slug)
+	// TODO: handle no result
+	if err != nil {
+		respond.With(w,r, http.StatusInternalServerError, err)
+		return
+	}
+
+	resp := snapShotResposne{
+		Slug: snapshot.Slug,
+		Count24Hours: snapshot.Count24Hours,
+		CountOneWeek: snapshot.CountOneWeek,
+		CountAllTime: snapshot.CountAllTime,
+	}
+
+	respond.With(w,r, http.StatusOK, resp)
+}
+
+type snapShotResposne struct {
+	Slug string  `json:"slug"`
+	Count24Hours int  `json:"count_24_hours"`
+	CountOneWeek int  `json:"count_one_week"`
+	CountAllTime  int`json:"count_all_time"`
 }
 
 func Cow(w http.ResponseWriter, r *http.Request) {
