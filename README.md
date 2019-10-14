@@ -51,6 +51,13 @@ My intention was to go beyond the simplest version of this application which may
 The application structure uses *some* patterns borrowed from Domain Driven Design in order to decouple various responsibilities. <br />  
 
 
+
+#### short comings 
+The processing of shortlink usage statistics would be better serviced by a periodic job to process the raw view counts and create a kind of snapshot.
+In keeping with the "this assignment should be accomplished in a day, perhaps 4 hours" I did not feel it was appropriate to spend the additional time to implement this.
+
+Similarly, I suspect that the call to save a `view` should be done processed via some sort of queue in order to ease load on Postgres.
+
 Document storage for links
 
 Redis cache probably
