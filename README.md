@@ -6,6 +6,8 @@
 
 `dep` is used to manage third party libraries:
 
+see https://github.com/golang/dep for installation instructions 
+
 `$ dep ensure`
 
 
