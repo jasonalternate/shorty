@@ -3,12 +3,14 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"github.com/go-chi/chi"
-	shortlinkService "github.com/jasondeutsch/shorty/internal/link/service"
-	statsService "github.com/jasondeutsch/shorty/internal/stats/service"
-	"gopkg.in/matryer/respond.v1"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi"
+	"gopkg.in/matryer/respond.v1"
+
+	shortlinkService "github.com/jasondeutsch/shorty/internal/link/service"
+	statsService "github.com/jasondeutsch/shorty/internal/stats/service"
 )
 
 type Handler struct {
@@ -27,6 +29,7 @@ func NewHandler(linkService shortlinkService.Service, statsService statsService.
 	h.router.With(ShortLinkCtx).Get("/{slug}", h.RedirectFromShortLink)
 	h.router.Post("/links", h.CreateShortLink)
 	h.router.With(ShortLinkCtx).Get("/links/{slug}/stats/", h.GetShortLinkStats)
+	h.router.NotFound(Cow)
 
 	return h
 }
@@ -100,22 +103,6 @@ type snapShotResposne struct {
 	CountAllTime  int`json:"count_all_time"`
 }
 
-func Cow(w http.ResponseWriter, r *http.Request) {
-	cow := `
- _____
-< 404 >
- -----
-        \   ^__^
-         \  (oo)\_______
-            (__)\       )\/\
-                ||----w |
-                ||     ||
-`
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte(cow))
-}
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.router.ServeHTTP(w, r)
@@ -134,3 +121,19 @@ func ShortLinkCtx(next http.Handler) http.Handler {
 	})
 }
 
+func Cow(w http.ResponseWriter, r *http.Request) {
+	cow := `
+ _____
+< 404 >
+ -----
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+`
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusNotFound)
+	w.Write([]byte(cow))
+}

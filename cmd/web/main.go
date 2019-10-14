@@ -47,7 +47,6 @@ func main() {
 	}
 
 	// services
-
 	statsRepo := stats.NewPostgres(postgresDB)
 	statsService := stats.NewStatsService(statsRepo)
 
@@ -56,18 +55,14 @@ func main() {
 	shortLinkHandlers := handler.NewHandler(shortlinkService, statsService)
 
 	// router
-
-
 	r := chi.NewRouter()
 
 	r.Route("/", func(r chi.Router) {
 		r.Use(middleware.Logger)
 		r.Mount("/", shortLinkHandlers)
-		r.NotFound(handler.Cow) // TODO
 	})
 
 	// serve
-
 	log.Printf("running on port: %s", port)
 
 	err = http.ListenAndServe(port, r)
@@ -112,3 +107,4 @@ func initPostgres() (*sql.DB, error) {
 	db, err := sql.Open("postgres",connectionInfo )
 	return db, err
 }
+

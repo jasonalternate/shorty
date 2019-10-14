@@ -58,7 +58,7 @@ func (s *LocalService) shortenUrlWithRetry(destination string, retries int) (str
 	existingLink := &model.ShortLink{}
 
 	for i := 0; i < 10 && existingLink != nil; i++ {
-		slug = keygen.KeyGenerator{}.Generate(6)
+		slug = keygen.KeyGenerator{}.Generate(7)
 
 		existingLink, err = s.ReadOne(slug)
 		if err != nil {
